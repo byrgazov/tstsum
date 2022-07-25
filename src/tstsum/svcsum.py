@@ -123,6 +123,8 @@ def serve_forever():
                                 work.touch()
 
                 channel.basic_ack(method.delivery_tag)
+                # [pika.exceptions.ConnectionWrongStateError]
+                # BlockingConnection.close(200, 'Normal shutdown') called on closed connection.
 
         if FAILS_LIMIT <= len(fails):
             sys.exit(1)

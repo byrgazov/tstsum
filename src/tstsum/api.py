@@ -2,7 +2,8 @@
 
 __all__ = ()
 
-import funcy as F
+import funcy    as F
+import operator as O
 import uuid
 import datetime
 
@@ -19,7 +20,7 @@ blueprint = flask.Blueprint('api', 'tstsum')
 
 @blueprint.route('/list_files', methods=['GET'])
 def list_files():
-    result = []
+    files = []
 
     for dirobj in minio.connection.list_objects('tstsum', ''):
         if not dirobj.is_dir or dirobj.object_name == '.tmp/':
@@ -29,13 +30,37 @@ def list_files():
             if fileobj.is_dir:
                 continue
 
-            result.append({
+            files.append({
                 'path': fileobj.object_name,
                 'time': int(fileobj.last_modified.timestamp()),
                 'size': fileobj.size,
             })
 
-    return {'result': result}
+    return {'files': files}
+
+
+@blueprint.route('/estimate_file/<path:filepath>', methods=['GET'])
+def estimate_file(filepath):
+    columns = ()
+    rows_cnt = 0
+
+    response = minio.connection.get_object(
+        'tstsum', filepath,
+    )
+
+    try:
+        chunk   = response.read()
+        csvbuf += chunk
+        offset += len(chunk)
+
+        if b'\n' in chunk or len(chunk) < chunk_size:
+            csvbuf = csvbuf.split(b'\n', 1)[0].decode()
+            csvrow = F.first(csv.reader([csvbuf]))
+            work.columns = tuple(csvrow)
+    finally:
+        response.close()
+
+    return {'columns_num': len(columns), 'rows_num': rows_cnt}
 
 
 @blueprint.route('/schedule_work', methods=['POST'])
@@ -82,7 +107,11 @@ def schedule_work():
 
 @blueprint.route('/list_works', methods=['GET'])
 def list_works():
-    works = [work.uid for work in zodb.root['works'].itervalues()]
+    works = [{
+        'work_id' : getattr(work, 'uid', None),
+        'filepath': getattr(work, 'filepath', None),
+        'mtime'   : work.mtime.isoformat(),
+    } for work in sorted(zodb.root['works'].itervalues(), key=O.attrgetter('mtime'))]
     return {'works': works}
 
 

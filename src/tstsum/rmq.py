@@ -47,7 +47,6 @@ def init_schema():
                        'x-delivery-count': 100,
                        'x-dead-letter-exchange'   : 'sum_csv_10.delayed',
                        'x-dead-letter-routing-key': 'sum_csv_10.works-delayed'},
-#           arguments={'x-message-ttl': MESSAGE_TTL * 1000},
         )
 
         channel.queue_declare(
