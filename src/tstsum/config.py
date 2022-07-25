@@ -39,7 +39,7 @@ def configure_app(app, noisy=False):
     #{ Minio
 
     app.config.from_mapping(
-        MINIO_ENDPOINT   =os.environ.get('MINIO_ENDPOINT',   'zb1:9091'),
+        MINIO_ENDPOINT   =os.environ.get('MINIO_ENDPOINT',   'localhost:9000'),
         MINIO_ACCESS_KEY =os.environ.get('MINIO_ACCESS_KEY', 'minioadmin'),
         MINIO_SECRET_KEY =os.environ.get('MINIO_SECRET_KEY', 'minioadmin'),
         MINIO_SECURE     =False,
@@ -50,5 +50,5 @@ def configure_app(app, noisy=False):
     #{ RabbitMQ
 
     app.config.from_mapping(
-        CONEY_BROKER_URI=os.environ.get('CONEY_BROKER_URI', 'amqp://user:password@zb1/sandbox'),
+        CONEY_BROKER_URI=os.environ.get('CONEY_BROKER_URI', 'amqp://user:password@localhost/'),
     )
