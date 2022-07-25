@@ -1,0 +1,9 @@
+setuptools
+click
+funcy
+flask
+flask-coney
+minio
+ZODB
+ZEO
+zodburi

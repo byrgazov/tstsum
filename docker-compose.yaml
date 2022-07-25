@@ -1,0 +1,25 @@
+version: "3.9"
+
+networks:
+  default: null
+
+services:
+  web:
+    dockerfile: Dockerfile-web
+    environment:
+      XXX: xxx
+    depends_on:
+      - zodb
+
+  zodb:
+    dockerfile: Dockerfile-zodb
+    ports:
+    - 8100:8100
+
+  frontend:
+    image: node:lts
+    volumes:
+      - myapp:/home/node/app
+
+volumes:
+  myapp:

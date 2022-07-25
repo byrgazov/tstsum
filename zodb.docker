@@ -1,0 +1,32 @@
+FROM python:3.7-alpine
+
+WORKDIR /usr/local/lib/tstsum
+
+#ENV PYTHONDONTWRITEBYTECODE 1
+#ENV PYTHONUNBUFFERED 1
+
+RUN apk update
+RUN apk upgrade
+RUN apk add python3-dev gcc libc-dev libffi-dev
+RUN apk add py3-virtualenv
+
+RUN adduser -Dh /usr/lib/tstsum tstsum
+
+USER tstsum
+WORKDIR /usr/lib/tstsum/
+
+COPY --chown=tstsum requirements.txt .
+COPY --chown=tstsum buildout.cfg .
+COPY --chown=tstsum setup.py .
+COPY --chown=tstsum src src
+
+RUN virtualenv --python=python3 .venv
+RUN .venv/bin/pip install -U pip zc.buildout
+RUN .venv/bin/buildout install zeobin zeosrv
+RUN mkdir data
+
+VOLUME /usr/lib/tstsum/data
+EXPOSE 8100
+
+CMD ["bin/tstsum", "init"]
+CMD ["bin/runzeo", "-C", ".parts/zeosrv/zeo.conf"]

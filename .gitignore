@@ -1,0 +1,17 @@
+*~
+*.pyc
+*.pyo
+*.csv
+*.egg-info
+
+/bin/
+/build/
+/data/
+/dist/
+/tmp/
+/.eggs/
+/.eggs-develop/
+/.venv/
+/.parts/
+/.installed.cfg
+/NOTES
