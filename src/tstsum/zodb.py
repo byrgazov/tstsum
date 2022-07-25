@@ -123,9 +123,9 @@ class WorkHolder(persistent.Persistent):
 
     def _p_resolveConflict(self, state0, state1, state2):
         state = F.merge(
-            F.project(state0, 'uuid bucket filepath ctime columns'.split()),
-            F.project(state1, 'uuid bucket filepath ctime columns'.split()),
-            F.project(state2, 'uuid bucket filepath ctime columns'.split()),
+            F.project(state0, 'uid bucket filepath ctime columns'.split()),
+            F.project(state1, 'uid bucket filepath ctime columns'.split()),
+            F.project(state2, 'uid bucket filepath ctime columns'.split()),
         )
 
         if state1['status'] != state2['status']:
