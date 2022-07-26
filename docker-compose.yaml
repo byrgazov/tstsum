@@ -1,25 +1,114 @@
-version: "3.9"
+version: "3"
 
-networks:
-  default: null
+tstsum-app-environ: &tstsum-app-environ
+  ZODB_STORAGE    : zeo://zodb:8100/?connection_pool_size=10&cache_size=100mb
+  MINIO_ENDPOINT  : minio:9000
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  CONEY_BROKER_URI: amqp://guest:guest@rabbitmq/
 
 services:
-  web:
-    dockerfile: Dockerfile-web
-    environment:
-      XXX: xxx
+  init:
+    build:
+      dockerfile: webapp.docker
+    restart: on-failure
+    command: "bin/tstsum init"
+    environment: *tstsum-app-environ
     depends_on:
       - zodb
+      - minio
+      - rabbitmq
+    networks:
+      - tstsum-net
+
+  webapp:
+    build:
+      dockerfile: webapp.docker
+    restart: always
+    deploy:
+      restart_policy:
+        delay: 5s
+    environment: *tstsum-app-environ
+    depends_on:
+      - zodb
+      - minio
+      - rabbitmq
+    networks:
+      - tstsum-net
+    expose:
+      - 8000
+
+  svcsum:
+    build:
+      dockerfile: webapp.docker
+    command: "bin/tstsum service-sum"
+    restart: always
+    deploy:
+      replicas: 3
+      restart_policy:
+        delay: 5s
+    environment: *tstsum-app-environ
+    depends_on:
+      - zodb
+      - minio
+      - rabbitmq
+    networks:
+      - tstsum-net
+
+  nginx:
+    image: docker.io/library/nginx:alpine
+    restart: always
+    depends_on:
+      - webapp
+    networks:
+      - tstsum-net
+    ports:
+      - 8000:80
+    volumes:
+      - ./etc/nginx.conf:/etc/nginx/conf.d/default.conf
 
   zodb:
-    dockerfile: Dockerfile-zodb
-    ports:
-    - 8100:8100
-
-  frontend:
-    image: node:lts
+    build:
+      dockerfile: zodb.docker
+    networks:
+      - tstsum-net
+    expose:
+      - 8100
     volumes:
-      - myapp:/home/node/app
+      - zodb:/usr/lib/tstsum/data
+
+  minio:
+    image: quay.io/minio/minio
+    command: server /data
+    networks:
+      - tstsum-net
+    expose:
+      - 9000
+    volumes:
+      - minio:/data
+    healthcheck:
+      test: "curl -f http://localhost:9000/minio/health/live"
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:alpine
+    networks:
+      - tstsum-net
+    expose:
+      - 5672
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
 
 volumes:
-  myapp:
+  zodb:
+    driver: local
+  minio:
+    driver: local
+  rabbitmq:
+    driver: local
+
+networks:
+  tstsum-net:
+    driver: bridge

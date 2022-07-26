@@ -26,5 +26,6 @@ RUN .venv/bin/buildout install tstsum waitress
 
 EXPOSE 8000
 
-CMD ["bin/tstsum", "init"]
+# @todo: ENTRYPOINT
+
 CMD ["bin/waitress-serve", "--port=8000", "--call", "tstsum.app:make_wsgi"]
